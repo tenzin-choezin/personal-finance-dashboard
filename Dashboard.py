@@ -35,9 +35,8 @@ def clean_data(initial_csv):
 
 # GETTING DATA 
 transactions_df = clean_data('transactions.csv')
-months = pd.unique(transactions_df['month_name']).tolist()
+months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December']
 years = pd.unique(transactions_df['transaction_year']).tolist()
-
 
 
 
@@ -82,6 +81,7 @@ app.layout = html.Div(
                                     id = 'pie-year',
                                     options = years,
                                     value = None,
+                                    search_value = '',
                                     style = {'marginBottom' : 5, 'font-family' : 'monospace'}
                                 )
                             ], style=dict(width='50%')
@@ -96,15 +96,16 @@ app.layout = html.Div(
                                     id = 'pie-month',
                                     options = months,
                                     value = None,
+                                    search_value = '',
                                     style = {'marginBottom' : 5, 'font-family' : 'monospace'}
                                 )
                             ], style=dict(width='50%')
                         )
-                    ], style=dict(display='flex')
+                    ], style=dict(display='flex'), className = 'nine columns'
                 ),
                 
-                dcc.Graph(id = 'pie-chart') #figure = go.Figure(data = [go.Pie(labels = df['category'], values = df['amount'], hole = 0.4)]))
-            
+                dcc.Graph(id = 'pie-chart')
+                
             ]
         )  
     ]
