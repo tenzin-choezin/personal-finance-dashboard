@@ -4,8 +4,10 @@ This program uses plotly's [dash](https://github.com/plotly/dash) library to vis
 
 ![](landingpage.png)
 
+
 ## Usage
 ### Install Dependencies
+
 ```shell
 import pandas as pd
 import numpy as np 
@@ -18,14 +20,15 @@ from datetime import date, datetime, timedelta
 
 You probably want to install them with `pip` or `conda`.
 
+
 ### Adding your own data
+
 In order to visualize your own finances, you'll have to find get transaction data in csv format and pass it into the cleandata function in the Dashboard.py application file.
 
-### Run
+### Running the application
 ```shell
-python dashboard.py
+python Dashboard.py
 ```
-
 
 -----------------
 <p align="left">
@@ -42,6 +45,6 @@ python dashboard.py
 
 ### Tools and Services : 
 * IDE - Vs code 
-* Application Deployment - Local server
-* Code Repository - GitHub
+* Application deployment - Local server
+* Code repository - GitHub
 -----------------
