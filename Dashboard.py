@@ -43,8 +43,8 @@ def get_credit_data(initial_csv):
 
 
 # GETTING DATA 
-flex_df = get_credit_data('flex.csv')
-unlimited_df =  get_credit_data('unlimited.csv')
+flex_df = get_credit_data('/Users/tenzinchoezin/Documents/GitHub/Personal-Finance-Dashboard/Data/flex.csv')
+unlimited_df =  get_credit_data('/Users/tenzinchoezin/Documents/GitHub/Personal-Finance-Dashboard/Data/unlimited.csv')
 transactions_df = pd.concat([flex_df[0], unlimited_df[0]], ignore_index = True)
 output_df = pd.concat([flex_df[1], unlimited_df[1]], ignore_index = True)
 
@@ -71,7 +71,8 @@ def get_bank_data(initial_csv):
     
     return acct_balance, monthly_net
 
-balance, income = get_bank_data('bank_account.csv')[0], get_bank_data('bank_account.csv')[1]
+bank_path = '/Users/tenzinchoezin/Documents/GitHub/Personal-Finance-Dashboard/Data/bank_account.csv'
+balance, income = get_bank_data(bank_path)[0], get_bank_data(bank_path)[1]
 
 def account_balance(df):
     fig = px.line(x = df['Posting Date'], y = df['Balance'], markers = True)
