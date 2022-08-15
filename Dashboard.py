@@ -10,7 +10,9 @@ pd.options.mode.chained_assignment = None
 
 
 # UTILITY FUNCTIONS BEGIN HERE
-def clean_data(initial_csv):
+
+# CREDIT
+def get_credit_data(initial_csv):
     # Input -> string format of csv location
     df = pd.read_csv(initial_csv)
     df = df.drop(columns = ['Memo'], axis = 1)
@@ -41,8 +43,8 @@ def clean_data(initial_csv):
 
 
 # GETTING DATA 
-flex_df = clean_data('flex.csv')
-unlimited_df =  clean_data('unlimited.csv')
+flex_df = get_credit_data('flex.csv')
+unlimited_df =  get_credit_data('unlimited.csv')
 transactions_df = pd.concat([flex_df[0], unlimited_df[0]], ignore_index = True)
 output_df = pd.concat([flex_df[1], unlimited_df[1]], ignore_index = True)
 
@@ -51,12 +53,49 @@ years = sorted(pd.unique(transactions_df['transaction_year']).tolist())
 categories = pd.unique(transactions_df['category'])
 
 
+# BANKING
+def get_bank_data(initial_csv):
+    bank_df = pd.read_csv(initial_csv, index_col=False).drop(columns = {'Check or Slip #'})
+    bank_df['Posting Date'] = pd.to_datetime(bank_df['Posting Date'])
+    
+    # GETTING NET INCOME DATA
+    bank_df['Month/Year'] = [datetime(bank_df['Posting Date'].to_list()[i].year, bank_df['Posting Date'].to_list()[i].month, 28) for i in range(len(bank_df['Posting Date']))]
+    monthly_net = bank_df.groupby(['Month/Year']).sum('Amount').reset_index()[['Month/Year', 'Amount']]
+    
+    # GETTING MONTHLY ACCOUNT BALANCE DATA
+    df = bank_df[['Posting Date', 'Balance']]
+    df['Month/Year'] = [datetime(df['Posting Date'].to_list()[i].year, df['Posting Date'].to_list()[i].month, 1) for i in range(len(df['Posting Date']))]
+    df['Rank'] = df.groupby('Month/Year')['Posting Date'].rank(method = 'first').astype(int)
+    join_df = df[['Month/Year', 'Rank']].groupby('Month/Year').max('Rank').reset_index()
+    acct_balance = pd.merge(join_df, df, left_on = ['Month/Year', 'Rank'], right_on = ['Month/Year', 'Rank'])
+    
+    return acct_balance, monthly_net
+
+balance, income = get_bank_data('bank_account.csv')[0], get_bank_data('bank_account.csv')[1]
+
+def account_balance(df):
+    fig = px.line(x = df['Posting Date'], y = df['Balance'], markers = True)
+    fig.update_layout(
+        xaxis_title = "Date",
+        yaxis_title = "Account Balance ($)",
+        title = 'Latest Account Balance per Month')
+    return fig
+
+def net_income(df):
+    fig = px.line(x = df['Month/Year'], y = df['Amount'], markers = True)
+    fig.update_layout(
+        xaxis_title = "Date",
+        yaxis_title = "Net Income($)",
+        title = 'Net Account Income (+/-) by Month')
+    return fig
+
+balance_fig = account_balance(balance)
+income_fig = net_income(income)
+
 
 app = dash.Dash()
 server = app.server
 app.title = 'Personal Finance Dashboard'
-
-
 
 app.layout = html.Div(
     id = 'root',
@@ -146,8 +185,8 @@ app.layout = html.Div(
                                     end_date_placeholder_text="End Period",
                                     calendar_orientation='horizontal',
                                     clearable = True,
-                                    with_portal = True,
-                                    style = {'font-family' : 'monospace', 'textAlign' : 'center', 'fontSize' : 16, 'marginBottom': '15'}
+                                    style = {'font-family' : 'monospace', 'textAlign' : 'center', 'fontSize' : 16, 'marginBottom': '15'},
+                                    with_portal = True
                                 ),
                             ], style={'display': 'inline-block', 'width': '20%', 'margin-left': '50px'}
                         ),
@@ -220,21 +259,34 @@ app.layout = html.Div(
                         'fontSize' : 15,
                         'width' : '{}%'.format(len(output_df.columns))
                     },
+                    style_header = {'fontWeight': 'bold', 'color' : 'black', 'fontSize' : 16},
                     style_table = {
                         'marginTop' : 10, 
-                        'padding-right': '20px', 
-                        'padding-left': '60px', 
-                        'width': '93%'
+                        'padding-left': '70px',
+                        'width': '92%'
                     }
                 ),
                                                     
                 dcc.Graph(id = 'line-chart', style={'margin-left': '30px', 'margin-right' : '5px'})
   
             ]
-        )  
+        ),
+        
+        
+        html.Div(
+            id = 'bankinfo',
+            children = [
+                html.H4('Bank Account History Overview', 
+                        style = {'fontSize' : 32, 'font-family' : 'monospace', 'font-weight' : 'bold', 'textAlign' : 'center', 'marginTop' : 45, 'marginBottom' : 5}),
+                
+                dcc.Graph(id = 'balance', figure = balance_fig, style={'margin-left': '30px', 'margin-right' : '5px'}),
+                
+                dcc.Graph(id = 'income', figure = income_fig, style={'margin-left': '30px', 'margin-right' : '5px'})
+            ]
+        )           
+                
     ]
 )
-
 
 
 # CALLBACKS BEGIN HERE
@@ -260,7 +312,7 @@ def piechart_update(year, month):
         df = df[(df['transaction_year'] == year) & (df['month_name'] == month)]
         year_str = ' ' + str(year)
         month_str = ' ' + str(month)
-    fig = px.pie(df, values = df['amount'], names = df['category'], hole = 0.2)
+    fig = px.pie(df, values = df['amount'], names = df['category'], hole = 0.15)
     fig.update_layout(title = 'Spending by Category during:' + month_str + year_str)
     return fig
 
@@ -341,7 +393,7 @@ def linechart_update(start, end, category, year, month):
         xaxis_title = "Date",
         yaxis_title = "Amount ($)")
     return fig
-
+    
 
 if __name__ == '__main__':
     app.run_server(debug = True, port = 4052)
