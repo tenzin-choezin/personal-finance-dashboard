@@ -1,6 +1,6 @@
 -----------------
 # Personal Finances Dashboard
-This program uses plotly's [dash](https://github.com/plotly/dash) library to visualize personal finances. It pulls all of its data from a single CSV file where all transactions are recorded and then reflected on the dashboard. 
+This program uses plotly's [dash](https://github.com/plotly/dash) library to visualize personal finances. It pulls all of its data from a few consolidated CSV files where all transactions are store and then reflected on the dashboard. 
 
 ![](first.png)
 ![](second.png)
