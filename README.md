@@ -4,6 +4,7 @@ This program uses plotly's [dash](https://github.com/plotly/dash) library to vis
 
 ![](first.png)
 ![](second.png)
+![](third.png)
 
 
 ## Usage
