@@ -43,8 +43,8 @@ def get_credit_data(initial_csv):
 
 
 # GETTING DATA 
-flex_df = get_credit_data('/Users/tenzinchoezin/Documents/GitHub/Personal-Finance-Dashboard/Data/flex.csv')
-unlimited_df =  get_credit_data('/Users/tenzinchoezin/Documents/GitHub/Personal-Finance-Dashboard/Data/unlimited.csv')
+flex_df = get_credit_data('flex.csv')
+unlimited_df =  get_credit_data('unlimited.csv')
 transactions_df = pd.concat([flex_df[0], unlimited_df[0]], ignore_index = True)
 output_df = pd.concat([flex_df[1], unlimited_df[1]], ignore_index = True)
 
@@ -71,27 +71,46 @@ def get_bank_data(initial_csv):
     
     return acct_balance, monthly_net
 
-bank_path = '/Users/tenzinchoezin/Documents/GitHub/Personal-Finance-Dashboard/Data/bank_account.csv'
-balance, income = get_bank_data(bank_path)[0], get_bank_data(bank_path)[1]
+balance, income = get_bank_data('bank_account.csv')[0], get_bank_data('bank_account.csv')[1]
 
 def account_balance(df):
-    fig = px.line(x = df['Posting Date'], y = df['Balance'], markers = True)
-    fig.update_layout(
+    line_fig = px.line(x = df['Posting Date'], y = df['Balance'], markers = True)
+    line_fig.update_layout(
         xaxis_title = "Date",
         yaxis_title = "Account Balance ($)",
-        title = 'Latest Account Balance per Month')
-    return fig
+        title = 'Latest Account Balance per Month',
+        title_x = 0.5)
+    
+    bar_fig = px.bar(x = df['Posting Date'], y = df['Balance'])
+    bar_fig.update_layout(
+        xaxis_title = "Date",
+        yaxis_title = "Account Balance ($)",
+        title = 'Latest Account Balance per Month',
+        title_x = 0.5)
+    
+    return line_fig, bar_fig
 
 def net_income(df):
-    fig = px.line(x = df['Month/Year'], y = df['Amount'], markers = True)
-    fig.update_layout(
+    line_fig = px.line(x = df['Month/Year'], y = df['Amount'], markers = True)
+    line_fig.update_layout(
         xaxis_title = "Date",
         yaxis_title = "Net Income($)",
-        title = 'Net Account Income (+/-) by Month')
-    return fig
+        title = 'Net Account Income (+/-) by Month',
+        title_x = 0.5)
+    
+    bar_fig = px.bar(x = df['Month/Year'], y = df['Amount'])
+    bar_fig.update_layout(
+        xaxis_title = "Date",
+        yaxis_title = "Account Balance ($)",
+        title = 'Latest Account Balance per Month',
+        title_x = 0.5)
+    
+    return line_fig, bar_fig
 
-balance_fig = account_balance(balance)
-income_fig = net_income(income)
+balance_fig_line = account_balance(balance)[0]
+balance_fig_bar = account_balance(balance)[1]
+income_fig_line = net_income(income)[0]
+income_fig_bar = net_income(income)[1]
 
 
 app = dash.Dash()
@@ -267,8 +286,15 @@ app.layout = html.Div(
                         'width': '92%'
                     }
                 ),
-                                                    
-                dcc.Graph(id = 'line-chart', style={'margin-left': '30px', 'margin-right' : '5px'})
+                 
+                html.Div(
+                    children = [
+                        dcc.Graph(id = 'line-chart', style={'margin-left': '30px', 'margin-right' : '0px', 'width' : '50%'}),
+                
+                        dcc.Graph(id = 'month-sums', style={'margin-left': '0px', 'margin-right' : '30px', 'width' : '50%'})
+    
+                    ], style = {'display' : 'flex'}
+                )
   
             ]
         ),
@@ -277,12 +303,26 @@ app.layout = html.Div(
         html.Div(
             id = 'bankinfo',
             children = [
-                html.H4('Bank Account History Overview', 
-                        style = {'fontSize' : 32, 'font-family' : 'monospace', 'font-weight' : 'bold', 'textAlign' : 'center', 'marginTop' : 45, 'marginBottom' : 5}),
+                html.H4('Bank Account Summary Overview', 
+                        style = {'fontSize' : 32, 'font-family' : 'monospace', 'font-weight' : 'bold', 'textAlign' : 'center', 'marginTop' : 45, 'marginBottom' : 7}),
                 
-                dcc.Graph(id = 'balance', figure = balance_fig, style={'margin-left': '30px', 'margin-right' : '5px'}),
+                html.Div(
+                    children = [
+                        dcc.Graph(id = 'balance_line', figure = balance_fig_line, style={'margin-left': '30px', 'margin-right' : '0px', 'width' : '50%'}),
                 
-                dcc.Graph(id = 'income', figure = income_fig, style={'margin-left': '30px', 'margin-right' : '5px'})
+                        dcc.Graph(id = 'income_line', figure = balance_fig_bar, style={'margin-left': '0px', 'margin-right' : '30px', 'width' : '50%'})
+    
+                    ], style = {'display' : 'flex'}
+                ),
+                
+                html.Div(
+                    children = [
+                        dcc.Graph(id = 'balance_bar', figure = income_fig_line, style={'margin-left': '30px', 'margin-right' : '0px', 'width' : '50%'}),
+                
+                        dcc.Graph(id = 'income_bar', figure = income_fig_bar, style={'margin-left': '0px', 'margin-right' : '30px', 'width' : '50%'})
+    
+                    ], style = {'display' : 'flex'}
+                )
             ]
         )           
                 
@@ -388,13 +428,82 @@ def linechart_update(start, end, category, year, month):
     if month and year:
         df = df[(df['transaction_year'] == year) & (df['month_name'] == month)]
     if len(df) == 0:
-        return px.line(title = 'Overall Spending')
-    fig = px.line(title = 'Overall Spending', x = df['transaction_date'], y = df['amount'], markers = True)
+        fig = px.line(title = 'Overall')
+        fig.update_layout(
+            xaxis_title = "Date",
+            yaxis_title = "Amount ($)",
+            title_x = 0.5)
+        return fig
+    fig = px.line(x = df['transaction_date'], y = df['amount'], markers = True)
     fig.update_layout(
         xaxis_title = "Date",
-        yaxis_title = "Amount ($)")
+        yaxis_title = "Amount ($)",
+        title = 'Overall Spending',
+        title_x = 0.5)
     return fig
     
 
+def end_of_month(df):
+    thirty1 = [1, 3, 5, 7, 8, 10, 12]
+    thirty = [4, 6, 9, 11]
+    other = [2]
+    
+    dates = []
+    for i in range(len(df)):
+        year = df['transaction_date'].to_list()[i].year
+        month = df['transaction_date'].to_list()[i].month
+        if month in thirty1:
+            dates.append(datetime(year, month, 31))
+        elif month in thirty:
+            dates.append(datetime(year, month, 30))
+        else:
+            dates.append(datetime(year, month, 28))
+
+    return dates
+
+
+@app.callback(
+    Output('month-sums', 'figure'),
+    [Input('date_range_line', 'start_date'),
+     Input('date_range_line', 'end_date'),
+     Input('category', 'value'),
+     Input('transaction-year', 'value')
+    ]
+)
+def monthsum_update(start, end, category, year):
+    df = transactions_df.sort_values('transaction_date')
+    if category is not None:
+        df = df[df['category'] == category]
+    if start is not None:
+        start_date = pd.to_datetime(start)
+        df = df[(df['transaction_date'] >= start_date)]
+    if end is not None:
+        end_date = pd.to_datetime(end)
+        df = df[(df['transaction_date'] <= end_date)]
+    if start is not None and end is not None:
+        start_date = pd.to_datetime(start)
+        end_date = pd.to_datetime(end)
+        df = df[(df['transaction_date'] >= start_date) & (df['transaction_date'] <= end_date)]
+    if (year is not None):
+        df = df[df['transaction_year'] == year]
+    if len(df) == 0:
+        fig = px.line(title = 'Total Spending per Month')
+        fig.update_layout(
+            xaxis_title = "Date",
+            yaxis_title = "Amount ($)",
+            title_x = 0.5)
+        return fig
+    
+    df['Month/Year'] = end_of_month(df)
+    output_df = df[['Month/Year', 'amount']].groupby('Month/Year').sum('amount').reset_index() 
+    fig = px.line(x = output_df['Month/Year'], y = output_df['amount'], markers = True)
+    fig.update_layout(
+        xaxis_title = "Date",
+        yaxis_title = "Amount ($)",
+        title = 'Total Spending per Month',
+        title_x = 0.5)
+    return fig
+
+    
 if __name__ == '__main__':
     app.run_server(debug = True, port = 4052)
