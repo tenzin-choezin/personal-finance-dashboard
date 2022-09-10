@@ -21,6 +21,12 @@ from datetime import date, datetime, timedelta
 
 You probably want to install them with `pip` or `conda`.
 
+### Cloning the repo
+```shell
+$ git clone https://github.com/tenzin-choezin/personal-finance-dashboard
+```
+For more information on how to clone a repo, click [here](https://docs.github.com/en/repositories/creating-and-managing-repositories/cloning-a-repository).
+
 
 ### Adding your own data
 
