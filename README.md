@@ -7,7 +7,7 @@ This program uses plotly's [dash](https://github.com/plotly/dash) library to vis
 
 
 ## Usage
-### Install Dependencies
+### Installing packages
 
 ```shell
 import pandas as pd
